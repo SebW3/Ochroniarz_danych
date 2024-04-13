@@ -2,6 +2,11 @@ from logins import OpenAI_key
 from openai import OpenAI
 import os
 
+def check_edge_case(item):
+    if len(item) < 2 or "n/a" in item:  # egde case
+        print("pominięto", item)
+        return True
+
 os.environ["OPENAI_API_KEY"] = OpenAI_key()
 client = OpenAI()
 
@@ -24,12 +29,15 @@ print(user_message)
 print(answer)
 lista_danych = answer.split("\n")
 print(lista_danych)
+for item in lista_danych:
+    if "Inne: Nieodpowiednie treści:" in item:
+        item = item.replace("Inne: ", "")
+        print("replaced", item)
 zmiana_danych = []
 for item in lista_danych:
     dane_wrazliwe = item.split(":")
-    if len(item) < 2 or "n/a" in item:  # egde case
-        print("pominięto", item)
 
+    if check_edge_case(item):
         continue
     kategoria = dane_wrazliwe[0].strip()
     dane = dane_wrazliwe[1].strip()
