@@ -3,3 +3,4 @@ Aplikacja, która będzie zwracała informację że wprowadzony tekst może zawi
 
 ### libs
 - openai
+- pyqt5
