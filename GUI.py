@@ -38,6 +38,7 @@ class MainWindow(QMainWindow):
 
         self.button2 = QPushButton("Konwersja", self)
         self.button2.move(350, 350)
+        self.button2.clicked.connect(self.conversion)
         self.button2.setStyleSheet("QPushButton:pressed { background-color: green; }")
 
 
@@ -53,12 +54,28 @@ class MainWindow(QMainWindow):
         if text is None:
             return None
 
-        zmiana_danych, wiadomosc = Ochroniarz.ochrona()
+        zmiana_danych, wiadomosc, przetworzony_tekst  = Ochroniarz.ochrona(text)
+        print(zmiana_danych)
+        self.wiadomosc = wiadomosc
+        self.przetworzony_tekst = przetworzony_tekst
 
-        print(text[1])
-        self.text_widget2.setText(wiadomosc)
+        self.text_widget2.setText(przetworzony_tekst)
         self.load_data_to_table(zmiana_danych)
+        self.wyswietla_wiadomosc = False
 
+    def conversion(self):
+        try:
+            try:
+                if self.wyswietla_wiadomosc is True:
+                    self.text_widget2.setText(self.przetworzony_tekst)
+                    self.wyswietla_wiadomosc = False
+                else:
+                    self.text_widget2.setText(self.wiadomosc)
+                    self.wyswietla_wiadomosc = True
+            except:
+                pass
+        except:
+            print("najpierw sprawdź tekst")
 
     def load_data_to_table(self, data):
         self.table.setRowCount(len(data))
