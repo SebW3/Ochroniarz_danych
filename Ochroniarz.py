@@ -7,6 +7,22 @@ def ochrona(user_message):
         if len(item) < 2 or "n/a" in item:  # edge case
             return True
 
+
+    def double_check(user_message=user_message, data_to_check=None):
+        system_message = f"Twoim zdaniem jest sprawdzenie czy w tekście znajdują się takie treści: '{data_to_check[1]}' z kategorii {data_to_check[0]}. Zwróć tylko 'Tak' lub 'Nie'"
+
+        messages = [{"role": "system", "content": system_message},
+                    {"role": "user", "content": user_message}, ]
+
+        completion = client.chat.completions.create(messages=messages, model="gpt-3.5-turbo", temperature=0)
+        answer = completion.choices[0].message.content
+        print(answer)
+        if "Tak" in answer:
+            return True
+        else:
+            return False
+
+
     os.environ["OPENAI_API_KEY"] = OpenAI_key()
     client = OpenAI()
 
@@ -55,8 +71,12 @@ def ochrona(user_message):
         zmiana_danych.append((kategoria, dane))
         przetworzony_tekst = przetworzony_tekst.replace(dane, f"[{kategoria.upper()}]")
 
-    for item in zmiana_danych:
-        if "Nieodpowiednie treści" in item and item[1] == "Tak":
+    for i in range(len(zmiana_danych)):
+        if "Nieodpowiednie treści" in zmiana_danych[i] and (zmiana_danych[i][1].lower() != "brak" or zmiana_danych[i][1].lower() != "nie"):
+            if double_check(user_message=user_message, data_to_check=zmiana_danych[i]) is True:
+                zmiana_danych[i] = ["Nieodpowiednie treści", "Tak"]
+            else: zmiana_danych[i] = ["Nieodpowiednie treści", "Nie"]
+        if "Nieodpowiednie treści" in zmiana_danych[i] and zmiana_danych[i][1] == "Tak":
             print("W tekście znajdują się nieodpowiednie treści")
             break
 
