@@ -11,7 +11,7 @@ def ochrona(user_message):
     def double_check(user_message=user_message, data_to_check=None):
         # osobne sprawdzenie, czy rzeczywiście nie ma nieodpowiednich treści w tekście
         if data_to_check is None:
-            system_message = f"Twoim zdaniem jest sprawdzenie czy w tekście znajdują się nieodpowiednie treści takei jak: mowę nienawiści, groźby, zastraszanie lub inne niedozwolone czynności. Jeśli coś znajdziesz to wypisz je w formacie: 'Nieodpowiednie treści: (wypisz po przecinku co znalazłeś)"
+            system_message = f"Twoim zdaniem jest sprawdzenie czy w tekście znajdują się nieodpowiednie treści takei jak: mowę nienawiści, groźby, zastraszanie, agresywne zachowanie, niedozwolone czynności itp. Jeśli coś znajdziesz to wypisz je w formacie: 'Nieodpowiednie treści: (wypisz po przecinku co znalazłeś)"
 
             messages = [{"role": "system", "content": system_message},
                         {"role": "user", "content": user_message}, ]
@@ -47,9 +47,6 @@ def ochrona(user_message):
     completion = client.chat.completions.create(messages=messages, model="gpt-3.5-turbo", temperature=0)
     answer = completion.choices[0].message.content
 
-    # odpowiedź od LLM z przykładu
-    # answer = "Imię: John\nNazwisko: Smith\nData urodzenia: 15 lipca 1985\nMiejsce urodzenia: Nowy Jork\nAdres zamieszkania: Maple Avenue 123\nNumer telefonu: 555-123-4567\nAdres e-mail: john.smith@example.com\nNieodpowiednie treści: agresywne i obraźliwe zachowanie wobec innych osób, incydent z policją"
-
     lista_danych = answer.split("\n")
 
     for i in range(len((lista_danych))):
@@ -79,24 +76,36 @@ def ochrona(user_message):
         przetworzony_tekst = przetworzony_tekst.replace(dane, f"[{kategoria.upper()}]")
 
     # weryfikacja czy się znajdują nieodpowiednie treści
+    czy_jest = None
     for i in range(len(zmiana_danych)):
         if "Nieodpowiednie treści" in zmiana_danych[i] and (zmiana_danych[i][1].lower() != "brak" or zmiana_danych[i][1].lower() != "nie"):
             # sprawdzanie, czy informacje są prawdziwe
             if double_check(user_message=user_message, data_to_check=zmiana_danych[i]) is True:
-                zmiana_danych[i] = ["Nieodpowiednie treści", "Tak"]
+                zmiana_danych[i] = ("Nieodpowiednie treści", "Tak")
             else:
-                zmiana_danych[i] = ["Nieodpowiednie treści", "Nie"]
+                zmiana_danych[i] = ("Nieodpowiednie treści", "Nie")
+                czy_jest = True
                 break
-        else:
+        elif "Nieodpowiednie treści" in zmiana_danych[i]:
             # sprawdzanie, czy rzeczywiście nie ma
             if double_check(user_message=user_message) is True:
-                zmiana_danych[i] = ["Nieodpowiednie treści", "Tak"]
+                zmiana_danych[i] = ("Nieodpowiednie treści", "Tak")
             else:
-                zmiana_danych[i] = ["Nieodpowiednie treści", "Nie"]
+                zmiana_danych[i] = ("Nieodpowiednie treści", "Nie")
+                czy_jest = True
                 break
         if "Nieodpowiednie treści" in zmiana_danych[i] and zmiana_danych[i][1] == "Tak":
             print("W tekście znajdują się nieodpowiednie treści")
+            czy_jest = True
             break
+
+    if czy_jest != True:  # jeżeli nie ma tego fragmentu to i tak sprawdza
+        if double_check(user_message=user_message) is True:
+            zmiana_danych.append(("Nieodpowiednie treści", "Tak"))
+            print("W tekście znajdują się nieodpowiednie treści")
+        else:
+            zmiana_danych.append(("Nieodpowiednie treści", "Nie"))
+
 
     if len(zmiana_danych) > 1:
         print("Tekst zawiera dane wrażliwe")
