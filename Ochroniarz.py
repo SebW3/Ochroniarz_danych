@@ -9,6 +9,18 @@ def ochrona(user_message):
 
 
     def double_check(user_message=user_message, data_to_check=None):
+        # osobne sprawdzenie, czy rzeczywiście nie ma nieodpowiednich treści w tekście
+        if data_to_check is None:
+            system_message = f"Twoim zdaniem jest sprawdzenie czy w tekście znajdują się nieodpowiednie treści takei jak: mowę nienawiści, groźby, zastraszanie lub inne niedozwolone czynności. Jeśli coś znajdziesz to wypisz je w formacie: 'Nieodpowiednie treści: (wypisz po przecinku co znalazłeś)"
+
+            messages = [{"role": "system", "content": system_message},
+                        {"role": "user", "content": user_message}, ]
+
+            completion = client.chat.completions.create(messages=messages, model="gpt-3.5-turbo", temperature=0)
+            answer = completion.choices[0].message.content
+            data_to_check = (answer.split(":")[0].strip(), answer.split(":")[1].strip())
+
+        # weryfikacja odpowiedzi
         system_message = f"Twoim zdaniem jest sprawdzenie czy w tekście znajdują się takie treści: '{data_to_check[1]}' z kategorii {data_to_check[0]}. Zwróć tylko 'Tak' lub 'Nie'"
 
         messages = [{"role": "system", "content": system_message},
@@ -66,11 +78,18 @@ def ochrona(user_message):
         zmiana_danych.append((kategoria, dane))
         przetworzony_tekst = przetworzony_tekst.replace(dane, f"[{kategoria.upper()}]")
 
-    # czy się znajdują nieodpowiednie treści
+    # weryfikacja czy się znajdują nieodpowiednie treści
     for i in range(len(zmiana_danych)):
         if "Nieodpowiednie treści" in zmiana_danych[i] and (zmiana_danych[i][1].lower() != "brak" or zmiana_danych[i][1].lower() != "nie"):
             # sprawdzanie, czy informacje są prawdziwe
             if double_check(user_message=user_message, data_to_check=zmiana_danych[i]) is True:
+                zmiana_danych[i] = ["Nieodpowiednie treści", "Tak"]
+            else:
+                zmiana_danych[i] = ["Nieodpowiednie treści", "Nie"]
+                break
+        else:
+            # sprawdzanie, czy rzeczywiście nie ma
+            if double_check(user_message=user_message) is True:
                 zmiana_danych[i] = ["Nieodpowiednie treści", "Tak"]
             else:
                 zmiana_danych[i] = ["Nieodpowiednie treści", "Nie"]
